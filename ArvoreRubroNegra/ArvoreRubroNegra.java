@@ -52,13 +52,15 @@ public class ArvoreRubroNegra {
     }
 
     public boolean isRubro(NoRB v){
-        return v != null && no.isRubro();
+        return v != null && v.isRubro();
+    }
+
+    public boolean isNegro(NoRB v){
+        return v == null || v.isNegro();
     }
 
     public boolean isExternal(NoRB v) {
-        return v != null
-                && v.left() == null
-                && v.right() == null;
+        return v != null && v.left() == null && v.right() == null;
     }
 
     public boolean isInternal(NoRB v) {
@@ -70,20 +72,16 @@ public class ArvoreRubroNegra {
     }
 
     public NoRB find(int k, NoRB v) {
-
-        if (v == null) {
+        if (v == null) 
             return null;
-        }
 
-        if (k < v.key()) {
+        if (k < v.key()) 
             return find(k, v.left());
-
-        } else if (k == v.key()) {
+        else if (k == v.key())
             return v;
-
-        } else {
+        else
             return find(k, v.right());
-        }
+        
     }
 
     public void insert(Object o, int k) {
@@ -167,45 +165,347 @@ public class ArvoreRubroNegra {
         raiz.setNegro();
     }
 
-    // =========================================================
-    // ROTAÇÃO À ESQUERDA
-    // =========================================================
-
     private void rotacaoEsquerda(NoRB x) {
 
-    }
+        NoRB y = x.right();
 
-    // =========================================================
-    // ROTAÇÃO À DIREITA
-    // =========================================================
+        if (y == null) return;
+
+        NoRB b = y.left();
+
+        x.setRight(b);
+
+        if (b != null)
+            b.setParent(x);
+
+        NoRB pai = x.parent();
+
+        y.setParent(pai);
+
+        if (pai == null)
+            setRoot(y);
+        else if (x == pai.left())
+            pai.setLeft(y);
+        else
+            pai.setRight(y);
+
+        y.setLeft(x);
+        x.setParent(y);
+    }
 
     private void rotacaoDireita(NoRB x) {
 
+        NoRB y = x.left();
+
+        if (y == null) return;
+
+        NoRB b = y.right();
+
+        x.setLeft(b);
+
+        if (b != null)
+            b.setParent(x);
+
+        NoRB pai = x.parent();
+
+        y.setParent(pai);
+
+        if (pai == null)
+            setRoot(y);
+        else if (x == pai.left())
+            pai.setLeft(y);
+        else
+            pai.setRight(y);
+
+        y.setRight(x);
+        x.setParent(y);
     }
 
-    // =========================================================
-    // REMOÇÃO
-    // =========================================================
 
     public Object remove(NoRB v) {
-        return null;
+
+        if (v == null)
+            return null;
+
+        Object old = v.element();
+
+        NoRB y = v;
+        boolean yRubro = y.isRubro();
+
+        NoRB x;
+        NoRB paiX;
+        boolean xEsquerdo;
+
+        // CASO 1: sem filho esquerdo
+
+        if (v.left() == null) {
+
+            x = v.right();
+
+            paiX = v.parent();
+
+            xEsquerdo = paiX != null && v == paiX.left();
+
+            transplant(v, v.right());
+        }
+
+        // CASO 2: sem filho direito
+
+        else if (v.right() == null) {
+
+            x = v.left();
+
+            paiX = v.parent();
+
+            xEsquerdo = paiX != null && v == paiX.left();
+
+            transplant(v, v.left());
+        }
+
+        // CASO 3: dois filhos
+
+        else {
+
+            y = minimo(v.right());
+
+            yRubro = y.isRubro();
+
+            x = y.right();
+
+            // sucessor é filho direto de v
+
+            if (y.parent() == v) {
+
+                paiX = y;
+
+                xEsquerdo = false;
+
+                if (x != null)
+                    x.setParent(y);
+            }
+            // sucessor está mais abaixo
+
+            else {
+
+                paiX = y.parent();
+
+                xEsquerdo = true;
+
+                transplant(y, y.right());
+
+                y.setRight(v.right());
+                y.right().setParent(y);
+            }
+
+            // y ocupa o lugar de v
+            transplant(v, y);
+
+            y.setLeft(v.left());
+            y.left().setParent(y);
+
+            // y recebe a cor que v tinha
+            if (v.isRubro())
+                y.setRubro();
+            else
+                y.setNegro();
+        }
+
+        tam--;
+
+        if (yRubro)
+            return old;
+
+        if (isRubro(x)) {
+            x.setNegro();
+            return old;
+        }
+
+        correcaoRemove(x, paiX, xEsquerdo);
+
+        return old;
     }
 
-    // =========================================================
-    // CORREÇÃO DA REMOÇÃO
-    // =========================================================
+    private NoRB minimo(NoRB v) {
+        while (v.left() != null)
+            v = v.left();
 
-    private void correcaoRemove() {
+        return v;
+    }
+    private void transplant(NoRB u, NoRB v) {
+        NoRB pai = u.parent();
 
+        if (pai == null) {
+            raiz = v;
+        }
+        else if (u == pai.left()) {
+            pai.setLeft(v);
+        }
+        else {
+            pai.setRight(v);
+        }
+
+        if (v != null)
+            v.setParent(pai);
     }
 
-    // =========================================================
-    // ELEMENTOS
-    // =========================================================
+    private void correcaoRemove(NoRB x, NoRB paiX, boolean xEsquerdo) {
+        while (x != raiz && isNegro(x)) {
+
+        if (paiX == null)
+            break;
+
+        if (xEsquerdo) {
+            NoRB w = paiX.right();
+            if (isRubro(w)) {
+
+                w.setNegro();
+                paiX.setRubro();
+
+                rotacaoEsquerda(paiX);
+
+                w = paiX.right();
+            }
+
+            NoRB esquerdoW = null;
+            NoRB direitoW = null;
+
+            if (w != null) {
+                esquerdoW = w.left();
+                direitoW = w.right();
+            }
+
+            if (isNegro(esquerdoW) && isNegro(direitoW)) {
+                if (w != null)
+                    w.setRubro();
+
+                // CASO 2b
+                if (isRubro(paiX)) {
+                    paiX.setNegro();
+                    break;
+                }
+
+                // CASO 2a
+                x = paiX;
+                paiX = x.parent();
+                if (paiX != null)
+                    xEsquerdo = x == paiX.left();
+                continue;
+            }
+
+            // CASO 3
+            if (isNegro(direitoW)) {
+                if (esquerdoW != null)
+                    esquerdoW.setNegro();
+
+                if (w != null) {
+                    w.setRubro();
+                    rotacaoDireita(w);
+                }
+
+                w = paiX.right();
+                direitoW = w != null ? w.right() : null;
+            }
+
+            // CASO 4
+            if (w != null) {
+                if (paiX.isRubro())
+                    w.setRubro();
+                else
+                    w.setNegro();
+            }
+
+            paiX.setNegro();
+            if (w != null && w.right() != null)
+                w.right().setNegro();
+
+            rotacaoEsquerda(paiX);
+
+            x = raiz;
+            paiX = null;
+        }
+        // x na dir
+        else {
+
+            NoRB w = paiX.left();
+            // CASO 1
+            if (isRubro(w)) {
+                w.setNegro();
+                paiX.setRubro();
+                rotacaoDireita(paiX);
+
+                w = paiX.left();
+            }
+
+            NoRB esquerdoW = null;
+            NoRB direitoW = null;
+
+            if (w != null) {
+                esquerdoW = w.left();
+                direitoW = w.right();
+            }
+            // CASO 2
+
+            if (isNegro(esquerdoW) && isNegro(direitoW)) {
+
+                if (w != null)
+                    w.setRubro();
+                // CASO 2b
+                if (isRubro(paiX)) {
+                    paiX.setNegro();
+                    break;
+                }
+
+                // CASO 2a
+                x = paiX;
+                paiX = x.parent();
+                if (paiX != null)
+                    xEsquerdo = x == paiX.left();
+
+                continue;
+            }
+
+            // CASO 3
+
+            if (isNegro(esquerdoW)) {
+
+                if (direitoW != null)
+                    direitoW.setNegro();
+                if (w != null) {
+                    w.setRubro();
+                    rotacaoEsquerda(w);
+                }
+
+                w = paiX.left();
+
+                esquerdoW = w != null ? w.left() : null;
+            }
+
+            // CASO 4
+            // filho esquerdo RUBRO
+            if (w != null) {
+                if (paiX.isRubro())
+                    w.setRubro();
+                else
+                    w.setNegro();
+            }
+
+            paiX.setNegro();
+
+            if (w != null && w.left() != null)
+                w.left().setNegro();
+
+            rotacaoDireita(paiX);
+            x = raiz;
+            paiX = null;
+        }
+    }
+
+    if (x != null)
+        x.setNegro();
+    }
 
     public Iterator elements() {
         ArrayList<Object> els = new ArrayList<>();
-
         Iterator it = nos();
 
         while (it.hasNext()) {
@@ -218,48 +518,31 @@ public class ArvoreRubroNegra {
 
     public Iterator nos() {
         ArrayList<NoRB> lista = new ArrayList<>();
-
         addNos(root(), lista);
-
         return lista.iterator();
     }
 
     private void addNos(NoRB no, ArrayList<NoRB> lista) {
-
-        if (no == null) {
-            return;
-        }
-
+        if (no == null) return;
         lista.add(no);
 
         addNos(no.left(), lista);
         addNos(no.right(), lista);
     }
 
-    // =========================================================
-    // ALTURA
-    // =========================================================
-
     public int depth(NoRB v) {
-        if (v == null || v == raiz) {
+        if (v == null || v == raiz) 
             return 0;
-        }
-
         return 1 + depth(v.parent());
     }
 
     public int height() {
-
         int altura = 0;
-
         Iterator it = nos();
 
         while (it.hasNext()) {
-
             NoRB no = (NoRB) it.next();
-
             int profundidade = depth(no);
-
             if (profundidade > altura) {
                 altura = profundidade;
             }
