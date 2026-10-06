@@ -60,11 +60,11 @@ public class ArvoreRubroNegra {
     }
 
     public boolean isExternal(NoRB v) {
-        return v != null && v.left() == null && v.right() == null;
+    return v == null;
     }
 
     public boolean isInternal(NoRB v) {
-        return v != null && (v.left() != null || v.right() != null);
+        return v != null;
     }
 
     public Iterator children(NoRB v) {
@@ -166,20 +166,16 @@ public class ArvoreRubroNegra {
     }
 
     private void rotacaoEsquerda(NoRB x) {
-
         NoRB y = x.right();
-
         if (y == null) return;
 
         NoRB b = y.left();
-
         x.setRight(b);
 
         if (b != null)
             b.setParent(x);
 
         NoRB pai = x.parent();
-
         y.setParent(pai);
 
         if (pai == null)
@@ -194,20 +190,16 @@ public class ArvoreRubroNegra {
     }
 
     private void rotacaoDireita(NoRB x) {
-
         NoRB y = x.left();
-
         if (y == null) return;
 
         NoRB b = y.right();
-
         x.setLeft(b);
 
         if (b != null)
             b.setParent(x);
 
         NoRB pai = x.parent();
-
         y.setParent(pai);
 
         if (pai == null)
@@ -223,12 +215,10 @@ public class ArvoreRubroNegra {
 
 
     public Object remove(NoRB v) {
-
         if (v == null)
             return null;
 
         Object old = v.element();
-
         NoRB y = v;
         boolean yRubro = y.isRubro();
 
@@ -239,58 +229,39 @@ public class ArvoreRubroNegra {
         // CASO 1: sem filho esquerdo
 
         if (v.left() == null) {
-
             x = v.right();
-
             paiX = v.parent();
-
             xEsquerdo = paiX != null && v == paiX.left();
-
             transplant(v, v.right());
         }
 
         // CASO 2: sem filho direito
-
         else if (v.right() == null) {
-
             x = v.left();
-
             paiX = v.parent();
-
             xEsquerdo = paiX != null && v == paiX.left();
-
             transplant(v, v.left());
         }
 
         // CASO 3: dois filhos
 
         else {
-
             y = minimo(v.right());
-
             yRubro = y.isRubro();
-
             x = y.right();
 
             // sucessor é filho direto de v
-
             if (y.parent() == v) {
-
                 paiX = y;
-
                 xEsquerdo = false;
-
                 if (x != null)
                     x.setParent(y);
             }
             // sucessor está mais abaixo
 
             else {
-
                 paiX = y.parent();
-
                 xEsquerdo = true;
-
                 transplant(y, y.right());
 
                 y.setRight(v.right());
@@ -357,12 +328,9 @@ public class ArvoreRubroNegra {
         if (xEsquerdo) {
             NoRB w = paiX.right();
             if (isRubro(w)) {
-
                 w.setNegro();
                 paiX.setRubro();
-
                 rotacaoEsquerda(paiX);
-
                 w = paiX.right();
             }
 
@@ -401,7 +369,6 @@ public class ArvoreRubroNegra {
                     w.setRubro();
                     rotacaoDireita(w);
                 }
-
                 w = paiX.right();
                 direitoW = w != null ? w.right() : null;
             }
@@ -425,7 +392,6 @@ public class ArvoreRubroNegra {
         }
         // x na dir
         else {
-
             NoRB w = paiX.left();
             // CASO 1
             if (isRubro(w)) {
@@ -446,7 +412,6 @@ public class ArvoreRubroNegra {
             // CASO 2
 
             if (isNegro(esquerdoW) && isNegro(direitoW)) {
-
                 if (w != null)
                     w.setRubro();
                 // CASO 2b
@@ -454,27 +419,23 @@ public class ArvoreRubroNegra {
                     paiX.setNegro();
                     break;
                 }
-
                 // CASO 2a
                 x = paiX;
                 paiX = x.parent();
                 if (paiX != null)
                     xEsquerdo = x == paiX.left();
-
                 continue;
             }
 
             // CASO 3
 
             if (isNegro(esquerdoW)) {
-
                 if (direitoW != null)
                     direitoW.setNegro();
                 if (w != null) {
                     w.setRubro();
                     rotacaoEsquerda(w);
                 }
-
                 w = paiX.left();
 
                 esquerdoW = w != null ? w.left() : null;
@@ -488,7 +449,6 @@ public class ArvoreRubroNegra {
                 else
                     w.setNegro();
             }
-
             paiX.setNegro();
 
             if (w != null && w.left() != null)
@@ -502,6 +462,53 @@ public class ArvoreRubroNegra {
 
     if (x != null)
         x.setNegro();
+    }
+
+
+    public void mostrar() {
+        mostrar(root(), 0);
+    }
+
+    private void mostrar(NoRB no, int nivel) {
+        if (root() == null) {
+            System.out.println("Árvore vazia");
+            return;
+        }
+        int h = height();
+
+        ArrayList<NoRB> nivelNos = new ArrayList<>();
+        nivelNos.add(root());
+
+        for (int i = 0; i <= h; i++) {
+            int espacos = (int) Math.pow(2, h - i);
+            imprimirEspacos(espacos);
+            ArrayList<NoRB> prox = new ArrayList<>();
+            for (NoRB n : nivelNos) {
+                if (n != null) {
+                    // Mostra chave + cor
+                    if (n.isRubro())
+                        System.out.print(n.key() + "(R)");
+                    else
+                        System.out.print(n.key() + "(N)");
+
+                    prox.add(n.left());
+                    prox.add(n.right());
+
+                } else {
+                    System.out.print("   ");
+                    prox.add(null);
+                    prox.add(null);
+                }
+                imprimirEspacos(espacos * 2);
+            }
+            System.out.println();
+            nivelNos = prox;
+        }
+    }
+
+    private void imprimirEspacos(int n) {
+        for (int i = 0; i < n; i++)
+            System.out.print(" ");
     }
 
     public Iterator elements() {
